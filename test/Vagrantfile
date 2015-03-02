@@ -7,11 +7,26 @@ end
 
 Vagrant.configure('2') do |config|
 
-  if ENV.key? 'VAGRANT_BOX'
+  if ENV.key? 'DOCKER_TEST'
+    DOCKER = true
+    config.vm.provider 'docker' do |d|
+      d.build_dir = '.'
+      d.name='fry'
+      d.has_ssh = true
+    end
+
+    config.ssh.username = "root"
+    config.ssh.private_key_path = "phusion_insecure.key"
+
+  elsif ENV.key? 'VAGRANT_BOX'
     config.vm.box = ENV['VAGRANT_BOX']
   else
     config.vm.box = 'precise64'
     config.vm.box_url = 'http://cloud-images.ubuntu.com/precise/current/precise-server-cloudimg-vagrant-amd64-disk1.box'
+  end
+
+  if not defined? DOCKER
+    DOCKER = false
   end
 
   config.hostmanager.enabled = true
@@ -21,6 +36,7 @@ Vagrant.configure('2') do |config|
     server.vm.hostname = 'fry'
     server.vm.network :private_network, :ip => '10.0.5.2'
     server.hostmanager.aliases = %w(test-alias)
+
   end
 
   config.vm.define :server2 do |server|

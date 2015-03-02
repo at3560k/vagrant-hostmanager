@@ -28,6 +28,7 @@ module VagrantPlugins
           else
             realhostfile = '/etc/hosts'
             move_cmd = 'mv -f'
+
           end
           # download and modify file with Vagrant-managed entries
           file = @global_env.tmp_path.join("hosts.#{machine.name}")
@@ -36,7 +37,15 @@ module VagrantPlugins
 
             # upload modified file and remove temporary file
             machine.communicate.upload(file, '/tmp/hosts')
-            machine.communicate.sudo("#{move_cmd} /tmp/hosts #{realhostfile}")
+
+            # Are we bind mounted?
+            test_bindmount = `df #{realhostfile} | grep #{realhostfile}`  # srs
+            if test_bindmount.empty?
+                machine.communicate.sudo("cat /tmp/hosts > #{realhostfile}")
+            else
+                machine.communicate.sudo("#{move_cmd} /tmp/hosts #{realhostfile}")
+            end
+ 
           end
 
           # i have no idea if this is a windows competibility issue or not, but sometimes it dosen't work on my machine
